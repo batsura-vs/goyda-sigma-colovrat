@@ -1,7 +1,7 @@
 import json
 from os import read
 import sys
-
+from windows import show_plot as nigga
 import numpy as np
 import requests
 from matplotlib import pyplot as plt
@@ -20,9 +20,11 @@ from PyQt6.QtWidgets import (
 
 app = QApplication(sys.argv)
 map_window = None
+url = None
 PAGE = QStackedWidget()
 
-def load_and_save(url):
+
+def load_and_save():
     unique = []
     z = 0
     while z != 16:
@@ -39,38 +41,19 @@ def load_and_save(url):
     with open("ЛУЧШАЯ СУБД.json", "w") as f:
         json.dump(unique, f)
 
-def show_plot():
+
+def show_plot(sender=None, listener=None):
     with open("ЛУЧШАЯ СУБД.json", "r") as f:
         unique = json.load(f)
-    pdiddy = np.array(unique)
-    data = []
-    for i in range(0, 16, 4):
-        data.append(np.hstack((pdiddy[i], pdiddy[i + 1], pdiddy[i + 2], pdiddy[i + 3])))
-
-    data = np.array(data).reshape(256, 256)
-    print(data.shape)
-
-    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-    X = np.array([i for i in range(256)])
-    Y = np.array([i for i in range(256)])
-    X, Y = np.meshgrid(X, Y)
-    Z = np.array(data)
-    surf = ax.plot_surface(
-        X,
-        Y,
-        Z,
-        # cmap=cm.coolwarm, #COLOR
-        color="b",
-        linewidth=0,
-        antialiased=False,
-    )
-    ax.set_zlim(0, 1000)
-    ax.zaxis.set_major_locator(LinearLocator(10))
-    ax.zaxis.set_major_formatter("{x:.02f}")
-
-    fig.colorbar(surf, shrink=0.5, aspect=5)
-
-    plt.show()
+    error = True
+    while error:
+        try:
+            nigga(unique=unique, sender=sender, listener=listener)
+            error = False
+        except Exception as e:
+            load_and_save()
+            print(e)
+            error = True
 
 
 class MainWindow(QMainWindow):
@@ -84,7 +67,7 @@ class MainWindow(QMainWindow):
         self.progressBar = QProgressBar(self)
         self.progressBar.setGeometry(25, 45, 335, 30)
         self.progressBar.move(200, 100)
-        
+
         self.input = QLineEdit()
         self.input.textChanged.connect(self.set_text)
 
@@ -96,6 +79,9 @@ class MainWindow(QMainWindow):
         self.button.clicked.connect(self.ready)
         layout.addWidget(self.button)
         layout.addWidget(self.progressBar)
+        self.last = QPushButton(text="Открыть последнее")
+        self.last.clicked.connect(self.open_last)
+        layout.addWidget(self.last)
 
         container = QWidget()
         container.setLayout(layout)
@@ -107,14 +93,29 @@ class MainWindow(QMainWindow):
         self.link = data
         self.label.setText(f"Current link: {data}")
 
-    def ready(self):
-        self.setDisabled(True)
-        for p in load_and_save(self.link):
-            self.progressBar.setValue(int(100 / 16 * p))
+    def open_last(self):
         show_plot()
+
+        # show_plot(sender=(20, 20), listener=(60, 60))
         self.close()
         PAGE.setCurrentWidget(map_window)
-        
+
+    def ready(self):
+        self.setDisabled(True)
+        global url
+        url = self.link
+        with open("url", "w") as f:
+            f.write(url)
+        try:
+            for p in load_and_save():
+                self.progressBar.setValue(int(100 / 16 * p))
+        except:
+            pass
+        show_plot()
+
+        # show_plot(sender=(20, 20), listener=(60, 60))
+        self.close()
+        PAGE.setCurrentWidget(map_window)
 
 
 class MapWindow(QMainWindow):
@@ -126,14 +127,9 @@ class MapWindow(QMainWindow):
 
         self.label = QLabel()
 
-        self.input = QLineEdit()
-        self.input.textChanged.connect(self.set_text)
-
         layout = QVBoxLayout()
-        layout.addWidget(self.input)
-        layout.addWidget(self.label)
 
-        button = QPushButton(text="Далее")
+        button = QPushButton(text="Отображение расположения базовых станций")
         button.clicked.connect(self.ready)
         layout.addWidget(button)
 
@@ -143,14 +139,13 @@ class MapWindow(QMainWindow):
         # Устанавливаем центральный виджет Window.
         self.setCentralWidget(container)
 
-    def set_text(self, data):
-        self.link = data
-        self.label.setText(f"Current link: {data}")
-        plt.close()
-
     def ready(self):
+        with open("url", "r") as f:
+            url = f.read()
+        data = requests.get(f"{url}/ppo_it/api/coords").json()["message"]
         plt.close()
-        show_plot()
+        show_plot(sender=data["sender"], listener=data["listener"])
+
 
 PAGE.show()
 map_window = MapWindow()
