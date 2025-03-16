@@ -11,7 +11,7 @@ from matplotlib.backends.backend_qtagg import (
     FigureCanvasQTAgg,
 )
 from matplotlib.figure import Figure
-from PyQt6 import QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class MplCanvas(FigureCanvasQTAgg):
