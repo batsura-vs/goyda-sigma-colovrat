@@ -1,0 +1,13 @@
+unique = []
+while len(unique) != 16:
+    a = requests.get('https://olimp.miet.ru/ppo_it/api').json()
+    status = a["status"]
+
+    if status == "ok":
+        tile = a["message"]["data"]
+
+        if tile not in unique:
+            unique.append(tile)
+
+
+
