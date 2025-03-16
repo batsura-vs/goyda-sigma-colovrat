@@ -1,6 +1,19 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QWidget
-
 import sys
+
+from PyQt6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
+app = QApplication(sys.argv)
+
+PAGE = QStackedWidget()
 
 
 class MainWindow(QMainWindow):
@@ -19,6 +32,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.input)
         layout.addWidget(self.label)
 
+        button = QPushButton(text="Далее")
+        layout.addWidget(button)
+
         container = QWidget()
         container.setLayout(layout)
 
@@ -30,9 +46,7 @@ class MainWindow(QMainWindow):
         self.label.setText(f"Current link: {data}")
 
 
-app = QApplication(sys.argv)
-
-window = MainWindow()
-window.show()
+PAGE.addWidget(MainWindow())
+PAGE.show()
 
 app.exec()
